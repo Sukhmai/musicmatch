@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package spotify.v1;
+
+service SpotifyService {
+    rpc SaveTopArtists(SaveTopArtistsRequest) returns (SaveTopArtistsResponse);
+    // GetAuthURL retrieves the URL to redirect the user to for authentication.
+    rpc GetAuthURL(GetAuthURLRequest) returns (GetAuthURLResponse);
+    // ExchangeToken exchanges the authorization code for access and refresh tokens.
+    rpc ExchangeToken(ExchangeTokenRequest) returns (ExchangeTokenResponse);
+    // GetUserCount retrieves the total number of users in the system.
+    rpc GetUserCount(GetUserCountRequest) returns (GetUserCountResponse);
+}
+
+message SaveTopArtistsRequest {
+    string access_token = 1;
+    string first_name = 2;
+    string last_name = 3;
+    string email = 4;
+    string number = 5;
+}
+
+message ArtistImage {
+    string url = 1;
+    int32 height = 2;
+    int32 width = 3;
+}
+
+message ArtistInfo {
+    string id = 1;
+    string name = 2;
+    repeated ArtistImage images = 3;
+    repeated string genres = 4;
+    int32 popularity = 5;
+    string spotify_url = 6;
+}
+
+message SaveTopArtistsResponse {
+    string user_id = 1;
+    repeated ArtistInfo unique_artists = 2;
+}
+
+message GetAuthURLRequest {}
+
+message GetAuthURLResponse {
+    string url = 1;
+}
+
+message GetUserCountRequest {}
+
+message GetUserCountResponse {
+    int32 count = 1;
+    int32 max_users = 2;
+}
+
+message ExchangeTokenRequest {
+    string code = 1;
+    string state = 2;
+}
+
+message ExchangeTokenResponse {
+    string access_token = 1;
+    string token_type = 2;
+    string refresh_token = 3;
+    int32 expires_in = 4;
+    string scope = 5;
+}

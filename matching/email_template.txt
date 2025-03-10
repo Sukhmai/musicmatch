@@ -1,0 +1,21 @@
+Hey {first_name} 👋,
+
+We're excited to reveal your musical soulmate to you!
+
+YOUR MATCH DETAILS:
+Name: {match_first_name} {match_last_name}
+Match Score: {match_score}/100
+
+CONTACT INFORMATION:
+Email: {match_email}
+Phone: {match_phone}
+
+You both have the following artists in common:
+{common_artists}
+
+Hopefully you'll connect with {match_first_name} and possibly make a new friend!
+
+We'd also love to hear your ideas on matchmaking to help people make more friends, so please fill out this feedback form after connecting: typeform.link
+
+Sincerely,
+Path Match
