@@ -149,7 +149,3 @@ The application uses a PostgreSQL database with the following tables:
 - **Backend**: Go, Connect RPC
 - **Database**: PostgreSQL
 - **Matching Algorithm**: Python, NumPy, SciPy, Rustworkx
-
-## License
-
-[MIT License](LICENSE)
