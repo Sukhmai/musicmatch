@@ -160,7 +160,7 @@ func (s *SpotifyServer) GetAuthURL(ctx context.Context, req *connect.Request[spo
 	baseURL := "https://accounts.spotify.com/authorize"
 	params := url.Values{}
 	params.Add("client_id", s.SpotifyClient.ClientID)
-	params.Add("redirect_uri", "http://localhost:5173/callback")
+	params.Add("redirect_uri", s.SpotifyClient.CallbackURL)
 	params.Add("response_type", "code")
 	params.Add("scope", "user-top-read user-read-email")
 	params.Add("state", state)
@@ -187,8 +187,7 @@ func (s *SpotifyServer) ExchangeToken(ctx context.Context,
 	}
 
 	// Exchange the code for access and refresh tokens
-	redirectURI := "http://localhost:5173/callback"
-	tokenResponse, err := s.SpotifyClient.GetTokens(req.Msg.Code, req.Msg.State, redirectURI)
+	tokenResponse, err := s.SpotifyClient.GetTokens(req.Msg.Code, req.Msg.State)
 	if err != nil {
 		log.Printf("Error getting tokens: %v", err)
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to get tokens: %w", err))
@@ -207,7 +206,6 @@ func (s *SpotifyServer) GetUserCount(ctx context.Context,
 	req *connect.Request[spotifyv1.GetUserCountRequest],
 ) (*connect.Response[spotifyv1.GetUserCountResponse], error) {
 	userCount, err := s.dbClient.GetUserCount(ctx)
-	fmt.Println(userCount)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}

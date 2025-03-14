@@ -16,6 +16,7 @@ import (
 type SpotifyClient struct {
 	ClientID     string
 	ClientSecret string
+	CallbackURL  string
 }
 
 func NewSpotifyClient() (*SpotifyClient, error) {
@@ -28,9 +29,15 @@ func NewSpotifyClient() (*SpotifyClient, error) {
 	if clientSecret == "" {
 		return nil, errors.New("SPOTIFY_CLIENT_SECRET environment variable not set")
 	}
+	callbackURL := os.Getenv("SPOTIFY_CALLBACK_URL")
+	if callbackURL == "" {
+		callbackURL = "http://localhost:5173/callback"
+	}
+
 	return &SpotifyClient{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
+		CallbackURL:  callbackURL,
 	}, nil
 }
 
@@ -50,7 +57,7 @@ func generateRandomState() (string, error) {
 	return base64.URLEncoding.EncodeToString(b), nil
 }
 
-func (c *SpotifyClient) Authorize(redirectURI string) (string, string, error) {
+func (c *SpotifyClient) Authorize() (string, string, error) {
 	scopes := "user-read-email user-top-read" // Ensure user-read-email scope is included
 
 	// Generate random state for CSRF protection
@@ -62,12 +69,11 @@ func (c *SpotifyClient) Authorize(redirectURI string) (string, string, error) {
 	v := url.Values{}
 	v.Set("client_id", c.ClientID)
 	v.Set("response_type", "code")
-	v.Set("redirect_uri", redirectURI)
+	v.Set("redirect_uri", c.CallbackURL)
 	v.Set("scope", scopes)
 	v.Set("state", state)
 
 	authorizeURL := spotifyAuthorizeURL + "?" + v.Encode()
-	fmt.Println("Authorize URL:", authorizeURL)
 
 	return authorizeURL, state, nil
 }
@@ -184,7 +190,7 @@ func (c *SpotifyClient) GetUserProfile(accessToken string) (*UserProfile, error)
 	return &profile, nil
 }
 
-func (c *SpotifyClient) GetTokens(code string, state string, redirectURI string) (*TokenResponse, error) {
+func (c *SpotifyClient) GetTokens(code string, state string) (*TokenResponse, error) {
 	tokenURL := spotifyTokenURL
 
 	data := url.Values{}
@@ -192,7 +198,7 @@ func (c *SpotifyClient) GetTokens(code string, state string, redirectURI string)
 	data.Set("client_secret", c.ClientSecret)
 	data.Set("grant_type", "authorization_code")
 	data.Set("code", code)
-	data.Set("redirect_uri", redirectURI)
+	data.Set("redirect_uri", c.CallbackURL)
 	data.Set("state", state)
 
 	req, err := http.NewRequest("POST", tokenURL, nil)

@@ -19,6 +19,7 @@ import {
   Flex,
 } from '@chakra-ui/react';
 import { ExternalLinkIcon } from '@chakra-ui/icons';
+import SpotifyLogo from './assets/Spotify_Logo_RGB_Black.png';
 
 function Callback() {
   const [status, setStatus] = useState('loading');
@@ -213,17 +214,25 @@ function Callback() {
           )}
           
           {artist.spotifyUrl && (
-            <Link 
-              href={artist.spotifyUrl} 
-              isExternal 
-              color="green.500"
-              fontWeight="bold"
-              fontSize="sm"
-              display="flex"
-              alignItems="center"
-            >
-              Listen on Spotify <ExternalLinkIcon mx="2px" />
-            </Link>
+            <VStack spacing={2} align="stretch">
+              <Link 
+                href={artist.spotifyUrl} 
+                isExternal 
+                color="green.500"
+                fontWeight="bold"
+                fontSize="sm"
+                display="flex"
+                alignItems="center"
+              >
+                Listen on Spotify <ExternalLinkIcon mx="2px" />
+              </Link>
+              <Image
+                src={SpotifyLogo}
+                alt="Spotify"
+                height="24px"
+                objectFit="contain"
+              />
+            </VStack>
           )}
         </Box>
       </Box>

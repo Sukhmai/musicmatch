@@ -81,3 +81,7 @@ seed_data/
 node_modules/
 
 tmp/
+
+dist/
+
+main
