@@ -18,7 +18,11 @@ CREATE TABLE users (
 CREATE TABLE artists (
     artist_id SERIAL PRIMARY KEY,
     spotify_artist_id TEXT UNIQUE NOT NULL,
-    artist_name TEXT NOT NULL
+    artist_name TEXT NOT NULL,
+    genres JSONB,
+    images JSONB,
+    popularity INT,
+    spotify_url TEXT
 );
 
 CREATE TABLE user_artists (

@@ -10,7 +10,9 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type SpotifyClient struct {
@@ -231,4 +233,145 @@ func (c *SpotifyClient) GetTokens(code string, state string) (*TokenResponse, er
 	}
 
 	return &tokenResponse, nil
+}
+
+// GetClientCredentialsToken gets an access token using client credentials flow
+func (c *SpotifyClient) GetClientCredentialsToken() (string, error) {
+	data := url.Values{}
+	data.Set("grant_type", "client_credentials")
+
+	req, err := http.NewRequest("POST", spotifyTokenURL, strings.NewReader(data.Encode()))
+	if err != nil {
+		return "", fmt.Errorf("could not create request: %w", err)
+	}
+
+	// Set basic auth with client ID and secret
+	req.SetBasicAuth(c.ClientID, c.ClientSecret)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("could not make request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("could not read response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("spotify API returned non-200 status code: %d, body: %s",
+			resp.StatusCode, string(body))
+	}
+
+	var tokenResponse struct {
+		AccessToken string `json:"access_token"`
+		ExpiresIn   int    `json:"expires_in"`
+	}
+
+	err = json.Unmarshal(body, &tokenResponse)
+	if err != nil {
+		return "", fmt.Errorf("could not unmarshal response body: %w", err)
+	}
+
+	return tokenResponse.AccessToken, nil
+}
+
+// SearchArtistsResponse represents the response from the Spotify API for artist search
+type SearchArtistsResponse struct {
+	Artists struct {
+		Items []Artist `json:"items"`
+	} `json:"artists"`
+}
+
+// SearchArtists searches for artists using the Spotify API with retry mechanism
+func (c *SpotifyClient) SearchArtists(query string, limit int, offset int, token string, market string) ([]Artist, error) {
+	// Retry configuration
+	maxRetries := 3
+	retryDelay := 500 * time.Millisecond
+
+	var lastErr error
+
+	// Retry loop
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		// If this is a retry, wait before trying again
+		if attempt > 0 {
+			time.Sleep(retryDelay)
+			// Increase delay for next retry
+			retryDelay *= 2
+		}
+
+		// Construct the URL with query parameters
+		baseURL := spotifyAPIURL + "/search"
+		params := url.Values{}
+		params.Add("q", query)
+		params.Add("type", "artist")
+		params.Add("limit", strconv.Itoa(limit))
+		params.Add("offset", strconv.Itoa(offset))
+
+		// Add market parameter if provided
+		if market != "" {
+			params.Add("market", market)
+		}
+
+		searchURL := baseURL + "?" + params.Encode()
+
+		// Create the request
+		req, err := http.NewRequest("GET", searchURL, nil)
+		if err != nil {
+			lastErr = fmt.Errorf("could not create request: %w", err)
+			continue
+		}
+
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		// Make the request with timeout
+		client := &http.Client{
+			Timeout: 10 * time.Second, // Add timeout to prevent hanging requests
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			lastErr = fmt.Errorf("could not make request: %w", err)
+			continue
+		}
+
+		// Ensure body is closed after we're done with it
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close() // Close immediately after reading
+
+		if err != nil {
+			lastErr = fmt.Errorf("could not read response body: %w", err)
+			continue
+		}
+
+		// Check for non-200 status codes
+		if resp.StatusCode != http.StatusOK {
+			// Only retry on 5xx errors (server errors)
+			if resp.StatusCode >= 500 && resp.StatusCode < 600 {
+				lastErr = fmt.Errorf("spotify API returned server error: %d, body: %s",
+					resp.StatusCode, string(body))
+				continue
+			}
+			// Don't retry on 4xx errors (client errors)
+			return nil, fmt.Errorf("spotify API returned client error: %d, body: %s",
+				resp.StatusCode, string(body))
+		}
+
+		// Parse the JSON response
+		var searchResponse SearchArtistsResponse
+
+		err = json.Unmarshal(body, &searchResponse)
+		if err != nil {
+			lastErr = fmt.Errorf("could not unmarshal response body: %w", err)
+			continue
+		}
+
+		// Success! Return the results
+		return searchResponse.Artists.Items, nil
+	}
+
+	// If we got here, all retries failed
+	return nil, fmt.Errorf("all %d attempts failed, last error: %v", maxRetries, lastErr)
 }

@@ -10,6 +10,10 @@ service SpotifyService {
     rpc ExchangeToken(ExchangeTokenRequest) returns (ExchangeTokenResponse);
     // GetUserCount retrieves the total number of users in the system.
     rpc GetUserCount(GetUserCountRequest) returns (GetUserCountResponse);
+    // SearchArtists searches the database for artists matching the query.
+    rpc SearchArtists(SearchArtistsRequest) returns (SearchArtistsResponse);
+    // SaveUserSelectedArtists saves manually selected artists for a user.
+    rpc SaveUserSelectedArtists(SaveUserSelectedArtistsRequest) returns (SaveUserSelectedArtistsResponse);
 }
 
 message SaveTopArtistsRequest {
@@ -64,4 +68,28 @@ message ExchangeTokenResponse {
     string refresh_token = 3;
     int32 expires_in = 4;
     string scope = 5;
+}
+
+message SearchArtistsRequest {
+    string query = 1;
+    int32 limit = 2; // Default limit is 10
+    int32 offset = 3; // Default offset is 0
+}
+
+message SearchArtistsResponse {
+    repeated ArtistInfo artists = 1;
+    int32 total = 2; // Total number of matching artists
+}
+
+message SaveUserSelectedArtistsRequest {
+    string first_name = 1;
+    string last_name = 2;
+    string email = 3;
+    string number = 4;
+    repeated string artist_ids = 5; // List of Spotify artist IDs selected by the user
+}
+
+message SaveUserSelectedArtistsResponse {
+    string user_id = 1;
+    repeated ArtistInfo unique_artists = 2;
 }

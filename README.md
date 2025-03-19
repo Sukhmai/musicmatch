@@ -7,7 +7,7 @@ A web application that matches users based on their music preferences and connec
 Music Match is a full-stack application that allows users to:
 
 1. Sign up with their personal information
-2. Connect their Spotify account to share their top artists
+2. Connect their Spotify account to share their top artists or manually submit
 3. Get matched with other users who have similar music tastes
 4. Receive email notifications with their match's contact information
 
@@ -29,7 +29,10 @@ The application consists of three main components:
 The frontend is built with React and Chakra UI, and uses Vite.js as the build system. Key features include:
 
 - User registration form with validation
-- Spotify authentication integration
+- Dual artist submission options:
+  - Spotify authentication integration
+  - Manual artist selection without requiring Spotify
+- Artist search functionality
 - Display of user's top artists after successful authentication
 - Real-time counter showing how many more users are needed until the next match day
 
@@ -45,6 +48,29 @@ The backend is implemented in Go using the Connect RPC framework. It provides th
 - Retrieval and storage of user's top artists from Spotify API
 - User data management in a PostgreSQL database
 - API endpoints for the frontend to interact with
+- Artist search and self-submission (without requiring Spotify authentication)
+
+#### Artist Database Population
+
+To support manual artist selection, you can seed the artist database ahead of time:
+
+```bash
+cd backend
+
+# Set required environment variables
+export SPOTIFY_CLIENT_ID=your_spotify_client_id
+export SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+export DB_HOST=localhost:5432
+export DB_USERNAME=spotifyuser
+export DB_NAME=spotify
+export DB_PASSWORD=your_password
+
+# Build and run the script
+go build -o populate-artists cmd/populate_artists/main.go
+./populate-artists
+```
+
+This script uses Spotify's API to collect artist information by searching common letters and combinations.
 
 ### Matching System
 
@@ -121,11 +147,21 @@ The application uses a PostgreSQL database with the following tables:
 
 ## Usage
 
-### User Registration and Spotify Connection
+### User Registration and Authentication
 
-1. Users visit the website and fill out the registration form
-2. After submitting, they are redirected to Spotify for authorization
-3. Upon successful authorization, their top artists are retrieved and stored
+Users have two options for registration:
+
+#### Manual Artist Selection
+1. Users fill out the registration form and select "Select Artists Manually"
+2. They can search for artists using the search functionality
+3. Selected artists are added to their list (up to 10 artists)
+4. Users can arrange their artists in order of preference
+5. Upon submission, their selections are stored in the database
+
+#### Spotify Connection
+1. Users fill out the registration form and select "Connect with Spotify"
+2. Upon submission, they are redirected to Spotify for authorization
+3. After authorization, their top artists are automatically retrieved and stored
 
 ### Matching Process
 

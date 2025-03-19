@@ -45,15 +45,23 @@ const (
 	// SpotifyServiceGetUserCountProcedure is the fully-qualified name of the SpotifyService's
 	// GetUserCount RPC.
 	SpotifyServiceGetUserCountProcedure = "/spotify.v1.SpotifyService/GetUserCount"
+	// SpotifyServiceSearchArtistsProcedure is the fully-qualified name of the SpotifyService's
+	// SearchArtists RPC.
+	SpotifyServiceSearchArtistsProcedure = "/spotify.v1.SpotifyService/SearchArtists"
+	// SpotifyServiceSaveUserSelectedArtistsProcedure is the fully-qualified name of the
+	// SpotifyService's SaveUserSelectedArtists RPC.
+	SpotifyServiceSaveUserSelectedArtistsProcedure = "/spotify.v1.SpotifyService/SaveUserSelectedArtists"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	spotifyServiceServiceDescriptor              = v1.File_spotify_v1_spotify_proto.Services().ByName("SpotifyService")
-	spotifyServiceSaveTopArtistsMethodDescriptor = spotifyServiceServiceDescriptor.Methods().ByName("SaveTopArtists")
-	spotifyServiceGetAuthURLMethodDescriptor     = spotifyServiceServiceDescriptor.Methods().ByName("GetAuthURL")
-	spotifyServiceExchangeTokenMethodDescriptor  = spotifyServiceServiceDescriptor.Methods().ByName("ExchangeToken")
-	spotifyServiceGetUserCountMethodDescriptor   = spotifyServiceServiceDescriptor.Methods().ByName("GetUserCount")
+	spotifyServiceServiceDescriptor                       = v1.File_spotify_v1_spotify_proto.Services().ByName("SpotifyService")
+	spotifyServiceSaveTopArtistsMethodDescriptor          = spotifyServiceServiceDescriptor.Methods().ByName("SaveTopArtists")
+	spotifyServiceGetAuthURLMethodDescriptor              = spotifyServiceServiceDescriptor.Methods().ByName("GetAuthURL")
+	spotifyServiceExchangeTokenMethodDescriptor           = spotifyServiceServiceDescriptor.Methods().ByName("ExchangeToken")
+	spotifyServiceGetUserCountMethodDescriptor            = spotifyServiceServiceDescriptor.Methods().ByName("GetUserCount")
+	spotifyServiceSearchArtistsMethodDescriptor           = spotifyServiceServiceDescriptor.Methods().ByName("SearchArtists")
+	spotifyServiceSaveUserSelectedArtistsMethodDescriptor = spotifyServiceServiceDescriptor.Methods().ByName("SaveUserSelectedArtists")
 )
 
 // SpotifyServiceClient is a client for the spotify.v1.SpotifyService service.
@@ -65,6 +73,10 @@ type SpotifyServiceClient interface {
 	ExchangeToken(context.Context, *connect.Request[v1.ExchangeTokenRequest]) (*connect.Response[v1.ExchangeTokenResponse], error)
 	// GetUserCount retrieves the total number of users in the system.
 	GetUserCount(context.Context, *connect.Request[v1.GetUserCountRequest]) (*connect.Response[v1.GetUserCountResponse], error)
+	// SearchArtists searches the database for artists matching the query.
+	SearchArtists(context.Context, *connect.Request[v1.SearchArtistsRequest]) (*connect.Response[v1.SearchArtistsResponse], error)
+	// SaveUserSelectedArtists saves manually selected artists for a user.
+	SaveUserSelectedArtists(context.Context, *connect.Request[v1.SaveUserSelectedArtistsRequest]) (*connect.Response[v1.SaveUserSelectedArtistsResponse], error)
 }
 
 // NewSpotifyServiceClient constructs a client for the spotify.v1.SpotifyService service. By
@@ -101,15 +113,29 @@ func NewSpotifyServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(spotifyServiceGetUserCountMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		searchArtists: connect.NewClient[v1.SearchArtistsRequest, v1.SearchArtistsResponse](
+			httpClient,
+			baseURL+SpotifyServiceSearchArtistsProcedure,
+			connect.WithSchema(spotifyServiceSearchArtistsMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		saveUserSelectedArtists: connect.NewClient[v1.SaveUserSelectedArtistsRequest, v1.SaveUserSelectedArtistsResponse](
+			httpClient,
+			baseURL+SpotifyServiceSaveUserSelectedArtistsProcedure,
+			connect.WithSchema(spotifyServiceSaveUserSelectedArtistsMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // spotifyServiceClient implements SpotifyServiceClient.
 type spotifyServiceClient struct {
-	saveTopArtists *connect.Client[v1.SaveTopArtistsRequest, v1.SaveTopArtistsResponse]
-	getAuthURL     *connect.Client[v1.GetAuthURLRequest, v1.GetAuthURLResponse]
-	exchangeToken  *connect.Client[v1.ExchangeTokenRequest, v1.ExchangeTokenResponse]
-	getUserCount   *connect.Client[v1.GetUserCountRequest, v1.GetUserCountResponse]
+	saveTopArtists          *connect.Client[v1.SaveTopArtistsRequest, v1.SaveTopArtistsResponse]
+	getAuthURL              *connect.Client[v1.GetAuthURLRequest, v1.GetAuthURLResponse]
+	exchangeToken           *connect.Client[v1.ExchangeTokenRequest, v1.ExchangeTokenResponse]
+	getUserCount            *connect.Client[v1.GetUserCountRequest, v1.GetUserCountResponse]
+	searchArtists           *connect.Client[v1.SearchArtistsRequest, v1.SearchArtistsResponse]
+	saveUserSelectedArtists *connect.Client[v1.SaveUserSelectedArtistsRequest, v1.SaveUserSelectedArtistsResponse]
 }
 
 // SaveTopArtists calls spotify.v1.SpotifyService.SaveTopArtists.
@@ -132,6 +158,16 @@ func (c *spotifyServiceClient) GetUserCount(ctx context.Context, req *connect.Re
 	return c.getUserCount.CallUnary(ctx, req)
 }
 
+// SearchArtists calls spotify.v1.SpotifyService.SearchArtists.
+func (c *spotifyServiceClient) SearchArtists(ctx context.Context, req *connect.Request[v1.SearchArtistsRequest]) (*connect.Response[v1.SearchArtistsResponse], error) {
+	return c.searchArtists.CallUnary(ctx, req)
+}
+
+// SaveUserSelectedArtists calls spotify.v1.SpotifyService.SaveUserSelectedArtists.
+func (c *spotifyServiceClient) SaveUserSelectedArtists(ctx context.Context, req *connect.Request[v1.SaveUserSelectedArtistsRequest]) (*connect.Response[v1.SaveUserSelectedArtistsResponse], error) {
+	return c.saveUserSelectedArtists.CallUnary(ctx, req)
+}
+
 // SpotifyServiceHandler is an implementation of the spotify.v1.SpotifyService service.
 type SpotifyServiceHandler interface {
 	SaveTopArtists(context.Context, *connect.Request[v1.SaveTopArtistsRequest]) (*connect.Response[v1.SaveTopArtistsResponse], error)
@@ -141,6 +177,10 @@ type SpotifyServiceHandler interface {
 	ExchangeToken(context.Context, *connect.Request[v1.ExchangeTokenRequest]) (*connect.Response[v1.ExchangeTokenResponse], error)
 	// GetUserCount retrieves the total number of users in the system.
 	GetUserCount(context.Context, *connect.Request[v1.GetUserCountRequest]) (*connect.Response[v1.GetUserCountResponse], error)
+	// SearchArtists searches the database for artists matching the query.
+	SearchArtists(context.Context, *connect.Request[v1.SearchArtistsRequest]) (*connect.Response[v1.SearchArtistsResponse], error)
+	// SaveUserSelectedArtists saves manually selected artists for a user.
+	SaveUserSelectedArtists(context.Context, *connect.Request[v1.SaveUserSelectedArtistsRequest]) (*connect.Response[v1.SaveUserSelectedArtistsResponse], error)
 }
 
 // NewSpotifyServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -173,6 +213,18 @@ func NewSpotifyServiceHandler(svc SpotifyServiceHandler, opts ...connect.Handler
 		connect.WithSchema(spotifyServiceGetUserCountMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	spotifyServiceSearchArtistsHandler := connect.NewUnaryHandler(
+		SpotifyServiceSearchArtistsProcedure,
+		svc.SearchArtists,
+		connect.WithSchema(spotifyServiceSearchArtistsMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	spotifyServiceSaveUserSelectedArtistsHandler := connect.NewUnaryHandler(
+		SpotifyServiceSaveUserSelectedArtistsProcedure,
+		svc.SaveUserSelectedArtists,
+		connect.WithSchema(spotifyServiceSaveUserSelectedArtistsMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/spotify.v1.SpotifyService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case SpotifyServiceSaveTopArtistsProcedure:
@@ -183,6 +235,10 @@ func NewSpotifyServiceHandler(svc SpotifyServiceHandler, opts ...connect.Handler
 			spotifyServiceExchangeTokenHandler.ServeHTTP(w, r)
 		case SpotifyServiceGetUserCountProcedure:
 			spotifyServiceGetUserCountHandler.ServeHTTP(w, r)
+		case SpotifyServiceSearchArtistsProcedure:
+			spotifyServiceSearchArtistsHandler.ServeHTTP(w, r)
+		case SpotifyServiceSaveUserSelectedArtistsProcedure:
+			spotifyServiceSaveUserSelectedArtistsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -206,4 +262,12 @@ func (UnimplementedSpotifyServiceHandler) ExchangeToken(context.Context, *connec
 
 func (UnimplementedSpotifyServiceHandler) GetUserCount(context.Context, *connect.Request[v1.GetUserCountRequest]) (*connect.Response[v1.GetUserCountResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("spotify.v1.SpotifyService.GetUserCount is not implemented"))
+}
+
+func (UnimplementedSpotifyServiceHandler) SearchArtists(context.Context, *connect.Request[v1.SearchArtistsRequest]) (*connect.Response[v1.SearchArtistsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("spotify.v1.SpotifyService.SearchArtists is not implemented"))
+}
+
+func (UnimplementedSpotifyServiceHandler) SaveUserSelectedArtists(context.Context, *connect.Request[v1.SaveUserSelectedArtistsRequest]) (*connect.Response[v1.SaveUserSelectedArtistsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("spotify.v1.SpotifyService.SaveUserSelectedArtists is not implemented"))
 }
