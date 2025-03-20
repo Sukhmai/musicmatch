@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"sort"
 	"time"
@@ -119,6 +120,8 @@ func getSeedArtists(spotifyClient *spotify.SpotifyClient, token string) []spotif
 	// Calculate artists per letter for single letter searches
 	artistsPerLetter := singleLetterTarget / len(lettersByFrequency)
 	pagesPerLetter := (artistsPerLetter + 49) / 50 // Ceiling division to get pages (50 artists per page)
+
+	pagesPerLetter = int(math.Min(float64(pagesPerLetter), 20))
 
 	log.Printf("Targeting approximately %d artists per letter (%d pages per letter)",
 		artistsPerLetter, pagesPerLetter)
